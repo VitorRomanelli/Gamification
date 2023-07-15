@@ -14,8 +14,8 @@
         public ConquestTo To { get; set; }
         public ConquestType Type { get; set; }
 
-        public List<UserConquest> Users = new();
-        public List<SectorConquest> Sectors = new();
+        public List<UserConquest> Users { get; set; } = new();
+        public List<SectorConquest> Sectors { get; set; } = new();
     }
 
     public enum ConquestTo

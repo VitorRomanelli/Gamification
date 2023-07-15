@@ -2,12 +2,13 @@
 using AspNetCore.IQueryable.Extensions.Filter;
 using AspNetCore.IQueryable.Extensions.Pagination;
 using Gamification.App.Extensions;
+using Gamification.App.Helpers;
 using Gamification.App.Models;
 using Gamification.App.Services.Interfaces;
 using Gamification.Application.Extensions;
+using Gamification.Core.DTOs;
 using Gamification.Core.Entities;
 using Gamification.Infra.Context;
-using keener.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -86,7 +87,7 @@ namespace Gamification.App.Services
 
         public async Task<ResponseModel> ListPaginate(UserFilterModel filter)
         {
-            return ResponseModel.BuildOkResponse(await _context.Users.Filter(filter).MapToDTO().ReturnPaginated(filter.Page));
+            return ResponseModel.BuildOkResponse(await _context.Users.ApplyFilter(filter).OrderByDescending(x => x.Points).MapToDTO().ReturnPaginated(filter.Page));
         }
 
         public async Task<ResponseModel> AddAsync(UserAddModel user)
@@ -147,7 +148,15 @@ namespace Gamification.App.Services
                 findedUser.PhoneNumber = user.Phone;
                 findedUser.SectorId = (Guid)user.SectorId!;
 
+                if (!String.IsNullOrEmpty(user.Picture) && !user.Picture.Contains("Uploads"))
+                {
+                    findedUser.Picture = MediaHelper.SaveImage(user.Picture, $"Users/{findedUser.Id}", user.Extension!, $"{findedUser.Id}.{user.Extension}");
+                }
+
                 _context.Users.Update(findedUser);
+                await _context.SaveChangesAsync();
+
+                return ResponseModel.BuildOkResponse(new UserDTO(findedUser));
             }
 
             if (user.Type == UserType.Supervisor || user.Type == UserType.Administrator)
@@ -163,12 +172,18 @@ namespace Gamification.App.Services
                 findedUser.Email = user.Email;
                 findedUser.PhoneNumber = user.Phone;
 
+                if (!String.IsNullOrEmpty(user.Picture) && !user.Picture.Contains("Uploads"))
+                {
+                    findedUser.Picture = MediaHelper.SaveImage(user.Picture, $"Users/{findedUser.Id}", user.Extension!, $"{findedUser.Id}.{user.Extension}");
+                }
+
                 _context.Users.Update(findedUser);
+                await _context.SaveChangesAsync();
+
+                return ResponseModel.BuildOkResponse(new UserDTO(findedUser));
             }
 
-            await _context.SaveChangesAsync();
-
-            return ResponseModel.BuildOkResponse("Usuário atualizado com sucesso!");
+            return ResponseModel.BuildErrorResponse("Ocorreu um erro");
         }
 
         public async Task<ResponseModel> RemoveAsync(string id)

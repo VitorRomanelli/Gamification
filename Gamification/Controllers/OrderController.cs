@@ -1,13 +1,15 @@
 ﻿using Gamification.App.Models;
 using Gamification.App.Services.Interfaces;
-using keener.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using static Gamification.App.Models.OrderModels;
 
 namespace Gamification.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [Authorize("Bearer")]
     public class OrderController : ControllerBase
     {
         private readonly IOrderService _service;
@@ -16,6 +18,14 @@ namespace Gamification.Controllers
         {
             _service = service;
         }
+
+        [HttpGet]
+        [Route("not-concluded/{sectorId}")]
+        public async Task<IActionResult> GetNotConcludedServices(Guid sectorId)
+        {
+            return new ResponseHelper().CreateResponse(await _service.GetNotConcludedServices(sectorId));
+        }
+
 
         [HttpGet]
         [Route("{id}")]
@@ -42,6 +52,15 @@ namespace Gamification.Controllers
         public async Task<IActionResult> Add(OrderAddModel model)
         {
             return new ResponseHelper().CreateResponse(await _service.AddAsync(model));
+        }
+
+        [HttpPut]
+        [Route("update-step")]
+        public async Task<IActionResult> UpdateStep(OrderStepUpdate model)
+        {
+
+            var userId = User.FindFirst(ClaimTypes.Authentication)!.Value;
+            return new ResponseHelper().CreateResponse(await _service.UpdateStep(model, userId));
         }
 
         [HttpPut]

@@ -1,12 +1,13 @@
 ﻿using Gamification.App.Models;
 using Gamification.App.Services.Interfaces;
-using keener.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Gamification.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [Authorize("Bearer")]
     public class UserController : ControllerBase
     {
         private readonly IUserService _service;

@@ -3,7 +3,6 @@ using Gamification.App.Services.Interfaces;
 using Gamification.Core.DTOs;
 using Gamification.Core.Entities;
 using Gamification.Infra.Context;
-using keener.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -73,14 +72,27 @@ namespace Gamification.App.Services
                 return ResponseModel.BuildUnauthorizedResponse("Usuário ou senha incorretos");
             }
 
-            var defaultToken = GenerateToken(findUser);
-
-            return ResponseModel.BuildOkResponse(new
+            if (findUser.Type == UserType.Standard)
             {
-                token = new JwtSecurityTokenHandler().WriteToken(defaultToken),
-                validTo = defaultToken.ValidTo,
-                user = new UserDTO(findUser),
-            });
+                var user = await _context.StandardUsers.FirstOrDefaultAsync(x => x.Id == findUser.Id);
+                var defaultToken = GenerateToken(user);
+                return ResponseModel.BuildOkResponse(new
+                {
+                    token = new JwtSecurityTokenHandler().WriteToken(defaultToken),
+                    validTo = defaultToken.ValidTo,
+                    user = new UserDTO(user),
+                });
+            }
+            else
+            {
+                var defaultToken = GenerateToken(findUser);
+                return ResponseModel.BuildOkResponse(new
+                {
+                    token = new JwtSecurityTokenHandler().WriteToken(defaultToken),
+                    validTo = defaultToken.ValidTo,
+                    user = new UserDTO(findUser),
+                });
+            }
         }
     }
 }

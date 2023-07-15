@@ -1,5 +1,6 @@
-﻿
-namespace Gamification.Application.Extensions
+﻿using Gamification.Application.Extensions;
+
+namespace Gamification.App.Extensions
 {
     public static class ListExtensions
     {

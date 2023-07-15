@@ -2,12 +2,12 @@
 using AspNetCore.IQueryable.Extensions.Filter;
 using AspNetCore.IQueryable.Extensions.Pagination;
 using Gamification.App.Extensions;
+using Gamification.App.Helpers;
 using Gamification.App.Models;
 using Gamification.App.Services.Interfaces;
 using Gamification.Application.Extensions;
 using Gamification.Core.Entities;
 using Gamification.Infra.Context;
-using keener.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -40,7 +40,7 @@ namespace Gamification.App.Services
 
         public async Task<ResponseModel> ListPaginate(SectorFilterModel filter)
         {
-            return ResponseModel.BuildOkResponse(await _context.Sectors.Filter(filter).AsNoTracking().Include(x => x.Supervisor).Include(x => x.Users).MapToDTO().ReturnPaginated(filter.Page));
+            return ResponseModel.BuildOkResponse((await _context.Sectors.AsNoTracking().Include(x => x.Supervisor).Include(x => x.Users).MapToDTO().ToListAsync()).OrderByDescending(x => x.Points).ToList().ReturnPaginated(filter.Page));
         }
 
         public async Task<ResponseModel> AddAsync(SectorAddModel model)

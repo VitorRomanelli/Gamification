@@ -1,6 +1,5 @@
 ﻿using Gamification.App.Models;
 using Gamification.App.Services.Interfaces;
-using keener.Helpers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Gamification.Controllers

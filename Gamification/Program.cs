@@ -2,6 +2,8 @@
 using Gamification.App.Services.Interfaces;
 using Gamification.Core.Entities;
 using Gamification.Infra.Context;
+using Gamification.WebSocket;
+using Gamification.WebSocket.Handlers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -71,10 +73,14 @@ builder.Services.AddControllers().AddNewtonsoftJson(options =>
     options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
 );
 
+builder.Services.AddWebSocketManager();
+builder.Services.AddSingleton<RoomHandler>();
+
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISectorService, SectorService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IConquestService, ConquestService>();
 
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
@@ -109,6 +115,14 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+var webSocketOptions = new WebSocketOptions()
+{
+    KeepAliveInterval = TimeSpan.FromSeconds(120),
+};
+
+app.UseWebSockets(webSocketOptions);
+app.MapWebSocketManager("/ws", app.Services.GetService<RoomHandler>()!);
+
 using (var scope = app.Services.CreateScope())
 {
     var dataContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -127,5 +141,7 @@ using (var scope = app.Services.CreateScope())
         }, "teste123");
     }
 }
+
+app.UseStaticFiles();
 
 app.Run();

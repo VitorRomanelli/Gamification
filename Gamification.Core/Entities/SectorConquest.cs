@@ -9,9 +9,13 @@ namespace Gamification.Core.Entities
     public class SectorConquest
     {
         public Guid Id { get; set; }
+        
         public Guid SectorId { get; set; }
         public Sector? Sector { get; set; }
+
         public Guid ConquestId { get; set; }
         public Conquest? Conquest { get; set; }
+
+        public DateTime Date { get; set; } = DateTime.Now;
     }
 }

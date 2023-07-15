@@ -1,10 +1,12 @@
 ﻿using Gamification.App.Models;
-using keener.Models;
+using static Gamification.App.Models.OrderModels;
 
 namespace Gamification.App.Services.Interfaces
 {
     public interface IOrderService
     {
+        Task<ResponseModel> GetNotConcludedServices(Guid sectorId);
+        Task<ResponseModel> UpdateStep(OrderStepUpdate model, string userId);
         Task<ResponseModel> AddAsync(OrderModels.OrderAddModel model);
         Task<ResponseModel> EditAsync(OrderModels.OrderEditModel model);
         Task<ResponseModel> GetOne(Guid id);

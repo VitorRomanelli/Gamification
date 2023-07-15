@@ -1,14 +1,7 @@
 ﻿using AspNetCore.IQueryable.Extensions;
 using AspNetCore.IQueryable.Extensions.Attributes;
 using AspNetCore.IQueryable.Extensions.Filter;
-using AspNetCore.IQueryable.Extensions.Pagination;
 using Gamification.Core.Entities;
-using keener.Helpers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Gamification.App.Models
 {
@@ -45,5 +38,8 @@ namespace Gamification.App.Models
         public string Phone { get; set; } = string.Empty;
         public Guid? SectorId { get; set; }
         public UserType Type { get; set; }
+
+        public string? Picture { get; set; }
+        public string? Extension { get; set; }
     }
 }

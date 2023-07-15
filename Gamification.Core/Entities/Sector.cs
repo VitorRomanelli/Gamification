@@ -18,5 +18,37 @@ namespace Gamification.Core.Entities
 
         public List<StandardUser> Users { get; set; } = new List<StandardUser>();
         public List<Order> Orders { get; set; } = new List<Order>();
+
+        public int Points
+        {
+            get
+            {
+                var points = 0;
+
+                if(Users != null && Users.Any())
+                {
+                    points += Users.Sum(x => x.Points);
+                }
+
+                if(Supervisor != null)
+                {
+                    points += Supervisor.Points;
+                }
+
+                return points;
+            }
+        }
+
+        public int? ConcludedOrders
+        {
+            get
+            {
+                if (Orders != null && Orders.Any())
+                {
+                    return Orders.Count(x => x.Step == Step.Done);
+                }
+                return null;
+            }
+        }
     }
 }

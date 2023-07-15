@@ -11,7 +11,10 @@ namespace Gamification.Core.Entities
 
         public string Name { get; set; } = string.Empty;
 
+        public string? Picture { get; set; }
+
         public int Points { get; set; } = 0;
+        public int ConcludedOrders { get; set; } = 0;
 
         public UserStatus Status { get; set; } = UserStatus.Active;
 
@@ -20,7 +23,7 @@ namespace Gamification.Core.Entities
         public List<UserConquest> Conquests { get; set; } = new List<UserConquest>();
     }
 
-    public enum UserType 
+    public enum UserType
     {
         [Description("Administrador")]
         Administrator,

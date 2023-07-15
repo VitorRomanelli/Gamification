@@ -18,6 +18,8 @@ namespace Gamification.Core.DTOs
             Type = user.Type;
             Status = user.Status;
             Points = user.Points!;
+            ConcludedOrders = user.ConcludedOrders;
+            Picture = user.Picture;
         }
 
         public UserDTO(StandardUser user)
@@ -29,10 +31,12 @@ namespace Gamification.Core.DTOs
             Type = user.Type;
             SectorId = user.SectorId;
             Points = user.Points!;
+            Picture = user.Picture;
         }
 
         public string Id { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
+        public string Picture { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Phone { get; set; } = string.Empty;
         public UserType Type { get; set; } = UserType.Standard;
@@ -47,6 +51,8 @@ namespace Gamification.Core.DTOs
             };
         }
         public int Points { get; set; } = 0;
+        public int Level { get; set; }
+        public int ConcludedOrders { get; set; }
         public Guid? SectorId { get; set; }
         public string TypeString
         {

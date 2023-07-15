@@ -1,5 +1,4 @@
 ﻿using Gamification.App.Models;
-using keener.Models;
 
 namespace Gamification.App.Services.Interfaces
 {

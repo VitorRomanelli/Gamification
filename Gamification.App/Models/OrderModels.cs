@@ -7,13 +7,13 @@ namespace Gamification.App.Models
 {
     public class OrderModels
     {
-        public class OrderFilterModel : ICustomQueryable
+        public class OrderFilterModel
         {
             public int Page { get; set; }
             public int PageSize { get; set; } = 10;
 
-            [QueryOperator(Operator = WhereOperator.Contains)]
             public string? Title { get; set; } = string.Empty;
+            public Guid? SectorId { get; set; }
         }
 
         public class OrderAddModel
@@ -23,6 +23,12 @@ namespace Gamification.App.Models
             public int RewardPoints { get; set; } = 0;
             public Step Step { get; set; } = Step.Schedule;
             public Guid SectorId { get; set; }
+        }
+
+        public class OrderStepUpdate
+        {
+            public Guid Id { get; set; }
+            public Step Step { get; set; } = Step.Schedule;
         }
 
         public class OrderEditModel
