@@ -36,149 +36,90 @@ namespace Gamification.App.Services
             var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == userId);
 
             if (user == null)
-            {
                 return ResponseModel.BuildConflictResponse("Usuário não encontrado");
-            }
+
+            Sector? sector = null;
 
             if (user.Type == UserType.Standard)
             {
-                var standard = await _context.StandardUsers.AsNoTracking().FirstOrDefaultAsync(x => x.Id == userId);
-                var sector = await _context.Sectors.AsNoTracking().Include(x => x.Users).Include(x => x.Orders).FirstOrDefaultAsync(x => x.Id == standard!.SectorId);
-
-                var conquests = await _context.Conquests.AsNoTracking().ToListAsync();
-
-                var userConquests = await _context.UserConquests.Where(x => x.UserId == userId).ToListAsync();
-                var sectorConquests = await _context.SectorConquests.Where(x => x.SectorId == sector!.Id).ToListAsync();
-
-                var conquestAdded = new List<ConquestDTO>();
-
-                foreach (var conquest in conquests)
-                {
-                    if (conquest.EndDate == null || conquest.EndDate.Value.Date >= DateTime.Now.Date)
-                    {
-                        if (conquest.To == ConquestTo.User)
-                        {
-                            if (!userConquests.Select(x => x.ConquestId).Contains(conquest.Id))
-                            {
-                                var conq = new UserConquest
-                                {
-                                    UserId = userId,
-                                    ConquestId = conquest.Id,
-                                };
-
-                                if (conquest.Type == ConquestType.Points && conquest.Points <= standard!.Points)
-                                {
-                                    await _context.UserConquests.AddAsync(conq);
-                                    conquestAdded.Add(new ConquestDTO(conquest));
-                                }
-
-                                if (conquest.Type == ConquestType.ServicesConcluded && conquest.ServicesConcludedCount <= standard!.ConcludedOrders)
-                                {
-                                    await _context.UserConquests.AddAsync(conq);
-                                    conquestAdded.Add(new ConquestDTO(conquest));
-                                }
-                            }
-                        }
-
-                        if (conquest.To == ConquestTo.Sector)
-                        {
-                            if (!sectorConquests.Select(x => x.ConquestId).Contains(conquest.Id))
-                            {
-                                var conq = new SectorConquest
-                                {
-                                    SectorId = sector!.Id,
-                                    ConquestId = conquest.Id,
-                                };
-
-                                if (conquest.Type == ConquestType.Points && conquest.Points <= sector!.Points)
-                                {
-                                    await _context.SectorConquests.AddAsync(conq);
-                                    conquestAdded.Add(new ConquestDTO(conquest));
-                                }
-
-                                if (conquest.Type == ConquestType.ServicesConcluded && conquest.ServicesConcludedCount <= sector!.ConcludedOrders)
-                                {
-                                    await _context.SectorConquests.AddAsync(conq);
-                                    conquestAdded.Add(new ConquestDTO(conquest));
-                                }
-                            }
-                        }
-                    }
-                }
-
-                await _context.SaveChangesAsync();
-
-                string wsResponse = JsonConvert.SerializeObject(new { userId = user.Id, Conquests = conquestAdded }, new JsonSerializerSettings
-                {
-                    ContractResolver = new CamelCasePropertyNamesContractResolver(),
-                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore
-                });
-
-                await _ws.SendMessageToGroup(user.Id, wsResponse);
+                var standard = await _context.StandardUsers.FirstOrDefaultAsync(x => x.Id == user.Id);
+                sector = await _context.Sectors.AsNoTracking().Include(x => x.Users).Include(x => x.Orders).FirstOrDefaultAsync(x => x.Id == standard!.SectorId);
             }
 
             if (user.Type == UserType.Supervisor)
+                sector = await _context.Sectors.AsNoTracking().Include(x => x.Users).Include(x => x.Orders).FirstOrDefaultAsync(x => x.SupervisorId == user!.Id);
+
+            var conquests = await _context.Conquests.Where(x => x.EndDate.HasValue && x.EndDate.Value >= DateTime.Now.Date).AsNoTracking().ToListAsync();
+
+            var userConquests = await _context.UserConquests.Where(x => x.UserId == userId).ToListAsync();
+
+            var sectorConquests = new List<SectorConquest>();
+
+            if (sector == null)
+                sectorConquests = await _context.SectorConquests.Where(x => x.SectorId == sector!.Id).ToListAsync();
+
+            var conquestAdded = new List<ConquestDTO>();
+
+            foreach (var conquest in conquests)
             {
-                var supervisor = await _context.SupervisorUsers.AsNoTracking().FirstOrDefaultAsync(x => x.Id == userId);
-                var sector = await _context.Sectors.AsNoTracking().Include(x => x.Users).Include(x => x.Orders).FirstOrDefaultAsync(x => x.SupervisorId == supervisor!.Id);
-
-                var conqQuery = _context.Conquests.Where(x => x.Points <= supervisor!.Points || x.ServicesConcludedCount <= supervisor!.ConcludedOrders).AsNoTracking();
-                var sectorConquests = new List<SectorConquest>();
-
-                if (sector == null)
+                if (conquest.To == ConquestTo.User)
                 {
-                    conqQuery = conqQuery.Where(x => x.Points <= sector!.Points || x.ServicesConcludedCount <= sector!.ConcludedOrders);
-                    sectorConquests = await _context.SectorConquests.Where(x => x.SectorId == sector!.Id).ToListAsync();
-                }
-
-                var conquests = await conqQuery.ToListAsync();
-
-                var userConquests = await _context.UserConquests.Where(x => x.UserId == userId).ToListAsync();
-
-                var conquestAdded = new List<ConquestDTO>();
-
-                foreach (var conquest in conquests)
-                {
-                    if (conquest.EndDate == null || conquest.EndDate.Value.Date <= DateTime.Now.Date)
+                    if (!userConquests.Select(x => x.ConquestId).Contains(conquest.Id))
                     {
-                        if (conquest.To == ConquestTo.User)
+                        var conq = new UserConquest
                         {
-                            if (!userConquests.Select(x => x.ConquestId).Contains(conquest.Id))
-                            {
-                                var conq = new UserConquest
-                                {
-                                    UserId = userId,
-                                    ConquestId = conquest.Id,
-                                };
-                                await _context.UserConquests.AddAsync(conq);
-                                conquestAdded.Add(new ConquestDTO(conquest));
-                            }
+                            UserId = userId,
+                            ConquestId = conquest.Id,
+                        };
+
+                        if (conquest.Type == ConquestType.Points && conquest.Points <= user!.Points)
+                        {
+                            await _context.UserConquests.AddAsync(conq);
+                            conquestAdded.Add(new ConquestDTO(conquest));
                         }
 
-                        if (conquest.To == ConquestTo.Sector)
+                        if (conquest.Type == ConquestType.ServicesConcluded && conquest.ServicesConcludedCount <= user!.ConcludedOrders)
                         {
-
-                            if (!sectorConquests.Select(x => x.ConquestId).Contains(conquest.Id))
-                            {
-                                await _context.SectorConquests.AddAsync(new SectorConquest
-                                {
-                                    SectorId = sector!.Id,
-                                    ConquestId = conquest.Id,
-                                });
-                                conquestAdded.Add(new ConquestDTO(conquest));
-                            }
+                            await _context.UserConquests.AddAsync(conq);
+                            conquestAdded.Add(new ConquestDTO(conquest));
                         }
                     }
                 }
 
-                string wsResponse = JsonConvert.SerializeObject(new { userId = user.Id, Conquests = conquestAdded }, new JsonSerializerSettings
+                if (conquest.To == ConquestTo.Sector)
                 {
-                    ContractResolver = new CamelCasePropertyNamesContractResolver(),
-                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore
-                });
+                    if (!sectorConquests.Select(x => x.ConquestId).Contains(conquest.Id))
+                    {
+                        var conq = new SectorConquest
+                        {
+                            SectorId = sector!.Id,
+                            ConquestId = conquest.Id,
+                        };
 
-                await _ws.SendMessageToGroup(user.Id, wsResponse);
+                        if (conquest.Type == ConquestType.Points && conquest.Points <= sector!.Points)
+                        {
+                            await _context.SectorConquests.AddAsync(conq);
+                            conquestAdded.Add(new ConquestDTO(conquest));
+                        }
+
+                        if (conquest.Type == ConquestType.ServicesConcluded && conquest.ServicesConcludedCount <= sector!.ConcludedOrders)
+                        {
+                            await _context.SectorConquests.AddAsync(conq);
+                            conquestAdded.Add(new ConquestDTO(conquest));
+                        }
+                    }
+                }
             }
+
+            await _context.SaveChangesAsync();
+
+            string wsResponse = JsonConvert.SerializeObject(new { userId = user.Id, Conquests = conquestAdded }, new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            });
+
+            await _ws.SendMessageToGroup(user.Id, wsResponse);
 
             return ResponseModel.BuildOkResponse("Conquistas revisadas");
         }

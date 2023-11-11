@@ -13,5 +13,6 @@ namespace Gamification.App.Services.Interfaces
         Task<ResponseModel> List();
         Task<ResponseModel> ListPaginate(OrderModels.OrderFilterModel filter);
         Task<ResponseModel> RemoveAsync(Guid id);
+        Task<ResponseModel> CheckConquest(string userId);
     }
 }
